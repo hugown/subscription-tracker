@@ -8,7 +8,7 @@ This app is built using Claude Code, to get familiar with the tool and learn wha
 ## Features
 
 - Add, edit, and delete subscriptions (name, cost, currency, billing cycle, next payment date, category, notes)
-- Billing cycles: weekly, monthly, quarterly, yearly, or a custom "every N days"
+- Billing cycles: weekly, monthly, yearly, last (non-weekend) day of the month, or a custom "every N days"
 - Automatically rolls a subscription's next payment date forward as time passes, so it always reflects what's actually next
 - Dashboard showing:
   - Upcoming payments in the next 30 days

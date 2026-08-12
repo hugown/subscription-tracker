@@ -36,8 +36,8 @@ function cycleLabel(sub) {
   switch (sub.billing_cycle) {
     case "weekly": return "Varje vecka";
     case "monthly": return `Månadsvis (dag ${new Date(sub.next_payment_date + "T00:00:00").getDate()})`;
-    case "quarterly": return "Kvartalsvis";
     case "yearly": return "Årsvis";
+    case "last_business_day": return "Sista vardagen i månaden";
     case "custom": return `Var ${sub.custom_days}:e dag`;
     default: return sub.billing_cycle;
   }

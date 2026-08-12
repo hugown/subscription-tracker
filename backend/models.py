@@ -6,21 +6,31 @@ has passed is rolled forward to the next occurrence based on the billing
 cycle, so the app always reflects "what's actually next" without requiring
 manual upkeep.
 """
+import calendar
 import sqlite3
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 
 DB_PATH = None  # set by app.py via init_app()
 
-VALID_CYCLES = {"weekly", "monthly", "quarterly", "yearly", "custom"}
+VALID_CYCLES = {"weekly", "monthly", "yearly", "custom", "last_business_day"}
 
 # How many times per year a subscription bills, used for spending totals.
 OCCURRENCES_PER_YEAR = {
     "weekly": 52,
     "monthly": 12,
-    "quarterly": 4,
     "yearly": 1,
+    "last_business_day": 12,
 }
+
+
+def _last_weekday_of_month(year, month):
+    """Return the last Mon-Fri date in the given month."""
+    last_day = calendar.monthrange(year, month)[1]
+    d = date(year, month, last_day)
+    while d.weekday() >= 5:  # 5=Saturday, 6=Sunday
+        d -= timedelta(days=1)
+    return d
 
 
 def init_app(db_path):
@@ -59,12 +69,13 @@ def init_db():
 
 def _advance_date(d, billing_cycle, custom_days):
     """Return the next occurrence of d strictly after today, per cycle."""
+    if billing_cycle == "last_business_day":
+        next_month = d + relativedelta(months=1)
+        return _last_weekday_of_month(next_month.year, next_month.month)
     if billing_cycle == "weekly":
         step = timedelta(weeks=1)
     elif billing_cycle == "monthly":
         step = relativedelta(months=1)
-    elif billing_cycle == "quarterly":
-        step = relativedelta(months=3)
     elif billing_cycle == "yearly":
         step = relativedelta(years=1)
     elif billing_cycle == "custom":
