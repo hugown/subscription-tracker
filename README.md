@@ -11,7 +11,7 @@ This app is built using Claude Code, to get familiar with the tool and learn wha
 - Billing cycles: weekly, monthly, quarterly, yearly, or a custom "every N days"
 - Automatically rolls a subscription's next payment date forward as time passes, so it always reflects what's actually next
 - Dashboard showing:
-  - Upcoming payments in the next 7 days
+  - Upcoming payments in the next 30 days
   - Monthly and annual spending totals
   - Spending broken down by category
 - Data is stored locally in a SQLite file — nothing leaves your machine
@@ -22,18 +22,39 @@ This app is built using Claude Code, to get familiar with the tool and learn wha
 
 ## Setup
 
+**macOS/Linux**
+
 ```bash
 cd backend
 python3 -m venv .venv
-source .venv/bin/activate      # on Windows: .venv\Scripts\activate
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+**Windows (PowerShell)**
+
+```powershell
+cd backend
+python -m venv .venv
+.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
 ## Run
 
+**macOS/Linux**
+
 ```bash
 cd backend
 source .venv/bin/activate      # if not already active
+python app.py
+```
+
+**Windows (PowerShell)**
+
+```powershell
+cd backend
+.venv\Scripts\Activate.ps1     # if not already active
 python app.py
 ```
 
@@ -67,7 +88,7 @@ subscription-tracker/
 | POST   | `/api/subscriptions`      | Create a subscription                |
 | PUT    | `/api/subscriptions/<id>` | Update a subscription                |
 | DELETE | `/api/subscriptions/<id>` | Delete a subscription                |
-| GET    | `/api/upcoming?days=7`    | Subscriptions due within N days      |
+| GET    | `/api/upcoming?days=30`   | Subscriptions due within N days      |
 | GET    | `/api/summary`            | Spending totals and category breakdown |
 
 ## Ideas for later

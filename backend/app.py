@@ -30,25 +30,25 @@ def validate_payload(data, partial=False):
     if not partial or "name" in data:
         name = (data.get("name") or "").strip()
         if not name:
-            return None, "name is required"
+            return None, "Namn krävs"
         cleaned["name"] = name
 
     if not partial or "cost" in data:
         try:
             cost = float(data.get("cost"))
         except (TypeError, ValueError):
-            return None, "cost must be a number"
+            return None, "Kostnad måste vara ett tal"
         if cost < 0:
-            return None, "cost cannot be negative"
+            return None, "Kostnad kan inte vara negativ"
         cleaned["cost"] = cost
 
-    if not partial or "currency" in data:
-        cleaned["currency"] = (data.get("currency") or "$").strip() or "$"
+    if not partial:
+        cleaned["currency"] = "SEK"
 
     if not partial or "billing_cycle" in data:
         cycle = data.get("billing_cycle")
         if cycle not in models.VALID_CYCLES:
-            return None, f"billing_cycle must be one of {sorted(models.VALID_CYCLES)}"
+            return None, f"billing_cycle måste vara en av {sorted(models.VALID_CYCLES)}"
         cleaned["billing_cycle"] = cycle
 
     custom_days = data.get("custom_days")
@@ -58,7 +58,7 @@ def validate_payload(data, partial=False):
             if custom_days < 1:
                 raise ValueError
         except (TypeError, ValueError):
-            return None, "custom_days must be a positive integer when billing_cycle is 'custom'"
+            return None, "custom_days måste vara ett positivt heltal när billing_cycle är 'custom'"
         cleaned["custom_days"] = custom_days
     elif "custom_days" in data:
         cleaned["custom_days"] = None
@@ -68,7 +68,7 @@ def validate_payload(data, partial=False):
         try:
             date.fromisoformat(raw_date)
         except (TypeError, ValueError):
-            return None, "next_payment_date must be an ISO date (YYYY-MM-DD)"
+            return None, "next_payment_date måste vara ett ISO-datum (ÅÅÅÅ-MM-DD)"
         cleaned["next_payment_date"] = raw_date
 
     if "category" in data:
@@ -103,7 +103,7 @@ def update_subscription(sub_id):
         return error(err)
     updated = models.update_subscription(sub_id, cleaned)
     if not updated:
-        return error("subscription not found", 404)
+        return error("prenumerationen hittades inte", 404)
     return jsonify(updated)
 
 
@@ -111,13 +111,13 @@ def update_subscription(sub_id):
 def delete_subscription(sub_id):
     ok = models.delete_subscription(sub_id)
     if not ok:
-        return error("subscription not found", 404)
+        return error("prenumerationen hittades inte", 404)
     return "", 204
 
 
 @app.route("/api/upcoming", methods=["GET"])
 def upcoming():
-    days = request.args.get("days", default=7, type=int)
+    days = request.args.get("days", default=30, type=int)
     today = date.today()
     horizon = today + timedelta(days=days)
     subs = models.list_subscriptions()

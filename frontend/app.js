@@ -15,7 +15,6 @@ const els = {
   fieldId: document.getElementById("sub-id"),
   fieldName: document.getElementById("field-name"),
   fieldCost: document.getElementById("field-cost"),
-  fieldCurrency: document.getElementById("field-currency"),
   fieldCycle: document.getElementById("field-cycle"),
   customDaysWrap: document.getElementById("custom-days-wrap"),
   fieldCustomDays: document.getElementById("field-custom-days"),
@@ -24,23 +23,22 @@ const els = {
   fieldNotes: document.getElementById("field-notes"),
 };
 
-function fmtMoney(amount, currency) {
-  const sign = currency && currency.length <= 3 ? currency : (currency || "$");
-  return `${sign}${Number(amount).toFixed(2)}`;
+function fmtMoney(amount) {
+  return `${Number(amount).toFixed(2).replace(".", ",")}:-`;
 }
 
 function fmtDate(iso) {
   const d = new Date(iso + "T00:00:00");
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return d.toLocaleDateString("sv-SE", { month: "short", day: "numeric", year: "numeric" });
 }
 
 function cycleLabel(sub) {
   switch (sub.billing_cycle) {
-    case "weekly": return "Weekly";
-    case "monthly": return `Monthly (day ${new Date(sub.next_payment_date + "T00:00:00").getDate()})`;
-    case "quarterly": return "Quarterly";
-    case "yearly": return "Yearly";
-    case "custom": return `Every ${sub.custom_days} days`;
+    case "weekly": return "Varje vecka";
+    case "monthly": return `Månadsvis (dag ${new Date(sub.next_payment_date + "T00:00:00").getDate()})`;
+    case "quarterly": return "Kvartalsvis";
+    case "yearly": return "Årsvis";
+    case "custom": return `Var ${sub.custom_days}:e dag`;
     default: return sub.billing_cycle;
   }
 }
@@ -51,7 +49,7 @@ async function api(path, options = {}) {
     ...options,
   });
   if (!res.ok) {
-    let msg = `Request failed (${res.status})`;
+    let msg = `Förfrågan misslyckades (${res.status})`;
     try {
       const body = await res.json();
       if (body.error) msg = body.error;
@@ -65,7 +63,7 @@ async function api(path, options = {}) {
 async function refreshAll() {
   const [subs, upcoming, summary] = await Promise.all([
     api("/subscriptions"),
-    api("/upcoming?days=7"),
+    api("/upcoming?days=30"),
     api("/summary"),
   ]);
   renderSummary(summary);
@@ -76,21 +74,21 @@ async function refreshAll() {
 
 function renderSummary(summary) {
   els.summaryCount.textContent = summary.subscription_count;
-  els.summaryMonthly.textContent = `$${summary.total_monthly.toFixed(2)}`;
-  els.summaryAnnual.textContent = `$${summary.total_annual.toFixed(2)}`;
+  els.summaryMonthly.textContent = fmtMoney(summary.total_monthly);
+  els.summaryAnnual.textContent = fmtMoney(summary.total_annual);
 }
 
 function renderUpcoming(items) {
   if (!items.length) {
-    els.upcomingList.innerHTML = `<p class="empty-state">Nothing due in the next 7 days.</p>`;
+    els.upcomingList.innerHTML = `<p class="empty-state">Inget att betala de kommande 30 dagarna.</p>`;
     return;
   }
   els.upcomingList.innerHTML = items
     .map((s) => {
-      const when = s.days_until === 0 ? "Today" : s.days_until === 1 ? "Tomorrow" : `In ${s.days_until} days`;
+      const when = s.days_until === 0 ? "Idag" : s.days_until === 1 ? "Imorgon" : `Om ${s.days_until} dagar`;
       return `
         <div class="upcoming-item">
-          <span class="name">${escapeHtml(s.name)} — ${fmtMoney(s.cost, s.currency)}</span>
+          <span class="name">${escapeHtml(s.name)} — ${fmtMoney(s.cost)}</span>
           <span class="when">${when} · ${fmtDate(s.next_payment_date)}</span>
         </div>`;
     })
@@ -100,7 +98,7 @@ function renderUpcoming(items) {
 function renderCategoryBreakdown(summary) {
   const entries = Object.entries(summary.by_category || {});
   if (!entries.length) {
-    els.categoryBreakdown.innerHTML = `<p class="empty-state">No subscriptions yet.</p>`;
+    els.categoryBreakdown.innerHTML = `<p class="empty-state">Inga prenumerationer än.</p>`;
     return;
   }
   els.categoryBreakdown.innerHTML = entries
@@ -108,7 +106,7 @@ function renderCategoryBreakdown(summary) {
       ([cat, v]) => `
       <div class="category-row">
         <span>${escapeHtml(cat)} <span class="muted">(${v.count})</span></span>
-        <span>$${v.monthly.toFixed(2)}/mo · $${v.annual.toFixed(2)}/yr</span>
+        <span>${fmtMoney(v.monthly)}/mån · ${fmtMoney(v.annual)}/år</span>
       </div>`
     )
     .join("");
@@ -116,7 +114,7 @@ function renderCategoryBreakdown(summary) {
 
 function renderTable(subs) {
   if (!subs.length) {
-    els.subsTbody.innerHTML = `<tr><td colspan="6" class="empty-state">No subscriptions yet — add your first one above.</td></tr>`;
+    els.subsTbody.innerHTML = `<tr><td colspan="6" class="empty-state">Inga prenumerationer än — lägg till din första ovan.</td></tr>`;
     return;
   }
   els.subsTbody.innerHTML = subs
@@ -124,13 +122,13 @@ function renderTable(subs) {
       (s) => `
       <tr>
         <td>${escapeHtml(s.name)}</td>
-        <td>${fmtMoney(s.cost, s.currency)}</td>
+        <td>${fmtMoney(s.cost)}</td>
         <td>${cycleLabel(s)}</td>
         <td>${fmtDate(s.next_payment_date)}</td>
         <td>${escapeHtml(s.category || "—")}</td>
         <td class="row-actions">
-          <button class="btn btn-secondary btn-small" data-edit="${s.id}">Edit</button>
-          <button class="btn btn-danger btn-small" data-delete="${s.id}">Delete</button>
+          <button class="btn btn-secondary btn-small" data-edit="${s.id}">Redigera</button>
+          <button class="btn btn-danger btn-small" data-delete="${s.id}">Ta bort</button>
         </td>
       </tr>`
     )
@@ -145,16 +143,14 @@ function escapeHtml(str) {
 
 function openModal(sub = null) {
   els.form.reset();
-  els.fieldCurrency.value = "$";
   els.fieldCycle.value = "monthly";
   els.customDaysWrap.classList.add("hidden");
 
   if (sub) {
-    els.modalTitle.textContent = "Edit subscription";
+    els.modalTitle.textContent = "Redigera prenumeration";
     els.fieldId.value = sub.id;
     els.fieldName.value = sub.name;
     els.fieldCost.value = sub.cost;
-    els.fieldCurrency.value = sub.currency;
     els.fieldCycle.value = sub.billing_cycle;
     els.fieldCustomDays.value = sub.custom_days || "";
     els.fieldDate.value = sub.next_payment_date;
@@ -162,7 +158,7 @@ function openModal(sub = null) {
     els.fieldNotes.value = sub.notes || "";
     els.customDaysWrap.classList.toggle("hidden", sub.billing_cycle !== "custom");
   } else {
-    els.modalTitle.textContent = "Add subscription";
+    els.modalTitle.textContent = "Lägg till prenumeration";
     els.fieldId.value = "";
     els.fieldDate.value = new Date().toISOString().slice(0, 10);
   }
@@ -188,7 +184,6 @@ els.form.addEventListener("submit", async (e) => {
   const payload = {
     name: els.fieldName.value.trim(),
     cost: parseFloat(els.fieldCost.value),
-    currency: els.fieldCurrency.value.trim() || "$",
     billing_cycle: els.fieldCycle.value,
     next_payment_date: els.fieldDate.value,
     category: els.fieldCategory.value.trim(),
@@ -223,7 +218,7 @@ els.subsTbody.addEventListener("click", async (e) => {
   }
 
   if (deleteId) {
-    if (!confirm("Delete this subscription?")) return;
+    if (!confirm("Ta bort denna prenumeration?")) return;
     try {
       await api(`/subscriptions/${deleteId}`, { method: "DELETE" });
       await refreshAll();
@@ -235,5 +230,5 @@ els.subsTbody.addEventListener("click", async (e) => {
 
 refreshAll().catch((err) => {
   console.error(err);
-  els.subsTbody.innerHTML = `<tr><td colspan="6" class="empty-state">Failed to load: ${escapeHtml(err.message)}</td></tr>`;
+  els.subsTbody.innerHTML = `<tr><td colspan="6" class="empty-state">Kunde inte läsas in: ${escapeHtml(err.message)}</td></tr>`;
 });

@@ -1,63 +1,63 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Subscription Tracker</title>
+  <title>Prenumerationsspårare</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app">
     <header class="app-header">
-      <h1>Subscription Tracker</h1>
-      <button id="add-btn" class="btn btn-primary">+ Add subscription</button>
+      <h1>Prenumerationsspårare</h1>
+      <button id="add-btn" class="btn btn-primary">+ Lägg till prenumeration</button>
     </header>
 
     <section class="summary-cards" id="summary-cards">
       <div class="card">
-        <div class="card-label">Active subscriptions</div>
+        <div class="card-label">Aktiva prenumerationer</div>
         <div class="card-value" id="summary-count">–</div>
       </div>
       <div class="card">
-        <div class="card-label">Monthly spend</div>
+        <div class="card-label">Månadskostnad</div>
         <div class="card-value" id="summary-monthly">–</div>
       </div>
       <div class="card">
-        <div class="card-label">Annual spend</div>
+        <div class="card-label">Årskostnad</div>
         <div class="card-value" id="summary-annual">–</div>
       </div>
     </section>
 
     <section class="panel">
-      <h2>Upcoming payments <span class="muted">(next 7 days)</span></h2>
+      <h2>Kommande betalningar <span class="muted">(nästa 30 dagar)</span></h2>
       <div id="upcoming-list" class="upcoming-list">
-        <p class="empty-state">Nothing due in the next 7 days.</p>
+        <p class="empty-state">Inget att betala de kommande 30 dagarna.</p>
       </div>
     </section>
 
     <section class="panel">
-      <h2>Spending by category</h2>
+      <h2>Kostnad per kategori</h2>
       <div id="category-breakdown" class="category-breakdown">
-        <p class="empty-state">No subscriptions yet.</p>
+        <p class="empty-state">Inga prenumerationer än.</p>
       </div>
     </section>
 
     <section class="panel">
-      <h2>All subscriptions</h2>
+      <h2>Alla prenumerationer</h2>
       <div class="table-wrap">
         <table id="subs-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Cost</th>
-              <th>Billed</th>
-              <th>Next payment</th>
-              <th>Category</th>
+              <th>Namn</th>
+              <th>Kostnad</th>
+              <th>Faktureras</th>
+              <th>Nästa betalning</th>
+              <th>Kategori</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="subs-tbody">
-            <tr><td colspan="6" class="empty-state">No subscriptions yet — add your first one above.</td></tr>
+            <tr><td colspan="6" class="empty-state">Inga prenumerationer än — lägg till din första ovan.</td></tr>
           </tbody>
         </table>
       </div>
@@ -66,61 +66,55 @@
 
   <div id="modal-backdrop" class="modal-backdrop hidden">
     <div class="modal">
-      <h2 id="modal-title">Add subscription</h2>
+      <h2 id="modal-title">Lägg till prenumeration</h2>
       <form id="sub-form">
         <input type="hidden" id="sub-id" />
 
         <label>
-          Name
+          Namn
           <input type="text" id="field-name" required placeholder="Netflix" />
         </label>
 
         <div class="form-row">
           <label>
-            Cost
-            <input type="number" id="field-cost" step="0.01" min="0" required placeholder="15.99" />
+            Kostnad (kr)
+            <input type="number" id="field-cost" step="0.01" min="0" required placeholder="149" />
           </label>
           <label>
-            Currency
-            <input type="text" id="field-currency" placeholder="$" value="$" maxlength="5" />
-          </label>
-        </div>
-
-        <div class="form-row">
-          <label>
-            Billing cycle
+            Faktureringscykel
             <select id="field-cycle">
-              <option value="monthly">Monthly</option>
-              <option value="weekly">Weekly</option>
-              <option value="quarterly">Quarterly</option>
-              <option value="yearly">Yearly</option>
-              <option value="custom">Custom (every N days)</option>
+              <option value="monthly">Månadsvis</option>
+              <option value="weekly">Varje vecka</option>
+              <option value="quarterly">Kvartalsvis</option>
+              <option value="yearly">Årsvis</option>
+              <option value="custom">Anpassad (var N:e dag)</option>
             </select>
           </label>
-          <label id="custom-days-wrap" class="hidden">
-            Every N days
-            <input type="number" id="field-custom-days" min="1" placeholder="10" />
-          </label>
         </div>
 
+        <label id="custom-days-wrap" class="hidden">
+          Var N:e dag
+          <input type="number" id="field-custom-days" min="1" placeholder="10" />
+        </label>
+
         <label>
-          Next payment date
+          Nästa betalningsdatum
           <input type="date" id="field-date" required />
         </label>
 
         <label>
-          Category <span class="muted">(optional)</span>
+          Kategori <span class="muted">(valfritt)</span>
           <input type="text" id="field-category" placeholder="Streaming" />
         </label>
 
         <label>
-          Notes <span class="muted">(optional)</span>
+          Anteckningar <span class="muted">(valfritt)</span>
           <input type="text" id="field-notes" placeholder="" />
         </label>
 
         <div class="modal-actions">
-          <button type="button" id="cancel-btn" class="btn btn-secondary">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" id="cancel-btn" class="btn btn-secondary">Avbryt</button>
+          <button type="submit" class="btn btn-primary">Spara</button>
         </div>
       </form>
     </div>

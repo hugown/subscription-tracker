@@ -43,7 +43,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             cost REAL NOT NULL,
-            currency TEXT NOT NULL DEFAULT '$',
+            currency TEXT NOT NULL DEFAULT 'SEK',
             billing_cycle TEXT NOT NULL,
             custom_days INTEGER,
             next_payment_date TEXT NOT NULL,
@@ -153,7 +153,7 @@ def create_subscription(data):
         (
             data["name"],
             data["cost"],
-            data.get("currency") or "$",
+            data.get("currency") or "SEK",
             data["billing_cycle"],
             data.get("custom_days"),
             data["next_payment_date"],
