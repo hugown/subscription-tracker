@@ -408,7 +408,7 @@ th[data-sort] { cursor: pointer; user-select: none; }
   border-radius: 16px;
   padding: 28px;
   width: 100%;
-  max-width: 440px;
+  max-width: 520px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(11, 31, 58, 0.3);

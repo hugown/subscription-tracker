@@ -33,6 +33,7 @@ const els = {
   fieldCycle: document.getElementById("field-cycle"),
   customDaysWrap: document.getElementById("custom-days-wrap"),
   fieldCustomDays: document.getElementById("field-custom-days"),
+  dateWrap: document.getElementById("date-wrap"),
   fieldDate: document.getElementById("field-date"),
   fieldCategory: document.getElementById("field-category"),
   fieldNotes: document.getElementById("field-notes"),
@@ -284,6 +285,37 @@ function setSort(key) {
   renderTable();
 }
 
+function toISODateLocal(d) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function lastBusinessDayOfMonth(year, monthIndex0) {
+  const d = new Date(year, monthIndex0 + 1, 0);
+  while (d.getDay() === 0 || d.getDay() === 6) {
+    d.setDate(d.getDate() - 1);
+  }
+  return d;
+}
+
+function nextLastBusinessDay(today = new Date()) {
+  const candidate = lastBusinessDayOfMonth(today.getFullYear(), today.getMonth());
+  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  if (candidate < todayMidnight) {
+    return lastBusinessDayOfMonth(today.getFullYear(), today.getMonth() + 1);
+  }
+  return candidate;
+}
+
+function updateDateFieldForCycle(cycle, { autofill = true } = {}) {
+  const isLastBizDay = cycle === "last_business_day";
+  els.dateWrap.classList.toggle("hidden", isLastBizDay);
+  els.fieldDate.required = !isLastBizDay;
+  if (isLastBizDay && autofill) {
+    els.fieldDate.value = toISODateLocal(nextLastBusinessDay());
+  }
+}
+
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str ?? "";
@@ -306,10 +338,12 @@ function openModal(sub = null) {
     els.fieldCategory.value = sub.category || "";
     els.fieldNotes.value = sub.notes || "";
     els.customDaysWrap.classList.toggle("hidden", sub.billing_cycle !== "custom");
+    updateDateFieldForCycle(sub.billing_cycle, { autofill: false });
   } else {
     els.modalTitle.textContent = "Lägg till prenumeration";
     els.fieldId.value = "";
     els.fieldDate.value = new Date().toISOString().slice(0, 10);
+    updateDateFieldForCycle(els.fieldCycle.value);
   }
   els.modalBackdrop.classList.remove("hidden");
   els.fieldName.focus();
@@ -326,6 +360,7 @@ els.modalBackdrop.addEventListener("click", (e) => {
 });
 els.fieldCycle.addEventListener("change", () => {
   els.customDaysWrap.classList.toggle("hidden", els.fieldCycle.value !== "custom");
+  updateDateFieldForCycle(els.fieldCycle.value);
 });
 
 document.querySelectorAll(".segmented-btn").forEach((btn) => {
