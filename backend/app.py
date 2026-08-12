@@ -144,7 +144,7 @@ def summary():
         total_annual += annual
         total_monthly += monthly
 
-        cat = s.get("category") or "Uncategorized"
+        cat = s.get("category") or "Okategoriserad"
         bucket = by_category.setdefault(cat, {"monthly": 0.0, "annual": 0.0, "count": 0})
         bucket["monthly"] += monthly
         bucket["annual"] += annual
@@ -165,6 +165,11 @@ def summary():
             },
         }
     )
+
+
+@app.route("/api/trend", methods=["GET"])
+def trend():
+    return jsonify(models.monthly_trend())
 
 
 @app.route("/")

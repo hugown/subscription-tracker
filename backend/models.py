@@ -109,6 +109,43 @@ def occurrences_per_year(billing_cycle, custom_days):
     return OCCURRENCES_PER_YEAR[billing_cycle]
 
 
+SWEDISH_MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"]
+
+
+def monthly_trend(months=12, today=None):
+    """Approximate monthly spend for each of the last `months` months.
+
+    There's no billing history, so a month's total is the monthly-equivalent
+    cost of every subscription that already existed (by created_at) at that
+    month's end.
+    """
+    today = today or date.today()
+    conn = get_db()
+    rows = conn.execute("SELECT cost, billing_cycle, custom_days, created_at FROM subscriptions").fetchall()
+    conn.close()
+    subs = [dict(r) for r in rows]
+
+    month_list = []
+    y, m = today.year, today.month
+    for _ in range(months):
+        month_list.append((y, m))
+        m -= 1
+        if m == 0:
+            m, y = 12, y - 1
+    month_list.reverse()
+
+    result = []
+    for y, m in month_list:
+        cutoff = date(y, m, calendar.monthrange(y, m)[1])
+        total = sum(
+            s["cost"] * occurrences_per_year(s["billing_cycle"], s.get("custom_days")) / 12
+            for s in subs
+            if date.fromisoformat(s["created_at"]) <= cutoff
+        )
+        result.append({"label": SWEDISH_MONTH_ABBR[m - 1], "total": round(total, 2)})
+    return result
+
+
 def row_to_dict(row):
     return {
         "id": row["id"],

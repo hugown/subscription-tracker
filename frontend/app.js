@@ -1,12 +1,27 @@
 const API = "/api";
 
+const CATEGORY_PALETTE = [
+  "#163460", "#4f6f9c", "#d97706", "#94a3b8",
+  "#7c3aed", "#0891b2", "#be123c", "#65a30d",
+  "#0d9488", "#9333ea",
+];
+const WEEKDAY_LABELS = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
+
 const els = {
   summaryCount: document.getElementById("summary-count"),
   summaryMonthly: document.getElementById("summary-monthly"),
   summaryAnnual: document.getElementById("summary-annual"),
-  upcomingList: document.getElementById("upcoming-list"),
+  trendArea: document.getElementById("trend-area"),
+  trendLine: document.getElementById("trend-line"),
+  trendPoints: document.getElementById("trend-points"),
+  trendLabels: document.getElementById("trend-labels"),
+  donut: document.getElementById("donut"),
+  donutCount: document.getElementById("donut-count"),
   categoryBreakdown: document.getElementById("category-breakdown"),
+  upcomingList: document.getElementById("upcoming-list"),
+  upcomingCalendar: document.getElementById("upcoming-calendar"),
   subsTbody: document.getElementById("subs-tbody"),
+  sortSelect: document.getElementById("sort-select"),
   addBtn: document.getElementById("add-btn"),
   modalBackdrop: document.getElementById("modal-backdrop"),
   modalTitle: document.getElementById("modal-title"),
@@ -22,6 +37,12 @@ const els = {
   fieldCategory: document.getElementById("field-category"),
   fieldNotes: document.getElementById("field-notes"),
 };
+
+let allSubs = [];
+let currentView = "list";
+let sortKey = "date";
+let sortDir = "asc";
+let categoryColorMap = new Map();
 
 function fmtMoney(amount) {
   return `${Number(amount).toFixed(2).replace(".", ",")}:-`;
@@ -43,6 +64,14 @@ function cycleLabel(sub) {
   }
 }
 
+function categoryColorFor(cat) {
+  return categoryColorMap.get(cat) || "#94a3b8";
+}
+
+function pillBackground(color) {
+  return `color-mix(in srgb, ${color} 16%, white)`;
+}
+
 async function api(path, options = {}) {
   const res = await fetch(`${API}${path}`, {
     headers: { "Content-Type": "application/json" },
@@ -61,21 +90,51 @@ async function api(path, options = {}) {
 }
 
 async function refreshAll() {
-  const [subs, upcoming, summary] = await Promise.all([
+  const [subs, upcoming, summary, trend] = await Promise.all([
     api("/subscriptions"),
     api("/upcoming?days=30"),
     api("/summary"),
+    api("/trend"),
   ]);
+  allSubs = subs;
+  buildCategoryColorMap(summary);
   renderSummary(summary);
   renderUpcoming(upcoming);
-  renderCategoryBreakdown(summary);
-  renderTable(subs);
+  if (currentView === "calendar") renderCalendar();
+  renderCategoryInsights(summary);
+  renderTrend(trend);
+  renderTable();
+  updateSortArrows();
 }
 
 function renderSummary(summary) {
   els.summaryCount.textContent = summary.subscription_count;
   els.summaryMonthly.textContent = fmtMoney(summary.total_monthly);
   els.summaryAnnual.textContent = fmtMoney(summary.total_annual);
+}
+
+function renderTrend(trend) {
+  const w = 600, h = 200, pad = 10;
+  const values = trend.map((t) => t.total);
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const range = max - min || 1;
+  const step = values.length > 1 ? (w - pad * 2) / (values.length - 1) : 0;
+  const points = values.map((v, i) => ({
+    x: pad + i * step,
+    y: pad + (h - pad * 2) * (1 - (v - min) / range),
+  }));
+  const line = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const area = points.length
+    ? `${line} L${points[points.length - 1].x.toFixed(1)},${h - pad} L${points[0].x.toFixed(1)},${h - pad} Z`
+    : "";
+
+  els.trendLine.setAttribute("d", line);
+  els.trendArea.setAttribute("d", area);
+  els.trendPoints.innerHTML = points
+    .map((p) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#163460"></circle>`)
+    .join("");
+  els.trendLabels.innerHTML = trend.map((t) => `<span>${escapeHtml(t.label)}</span>`).join("");
 }
 
 function renderUpcoming(items) {
@@ -95,44 +154,134 @@ function renderUpcoming(items) {
     .join("");
 }
 
-function renderCategoryBreakdown(summary) {
+function renderCalendar() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const startOffset = (firstDay.getDay() + 6) % 7; // Monday-first
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const paymentsByDay = {};
+  allSubs.forEach((s) => {
+    const d = new Date(s.next_payment_date + "T00:00:00");
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      paymentsByDay[d.getDate()] = paymentsByDay[d.getDate()] ? `${paymentsByDay[d.getDate()]}, ${s.name}` : s.name;
+    }
+  });
+
+  const cells = [];
+  for (let i = 0; i < startOffset; i++) {
+    cells.push(`<div class="calendar-cell empty"></div>`);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const label = paymentsByDay[d];
+    cells.push(`
+      <div class="calendar-cell ${label ? "has-payment" : ""}">
+        <div class="cell-day">${d}</div>
+        ${label ? `<div class="cell-payment">${escapeHtml(label)}</div>` : ""}
+      </div>`);
+  }
+
+  const weekdayHtml = WEEKDAY_LABELS.map((w) => `<div class="calendar-weekday">${w}</div>`).join("");
+  els.upcomingCalendar.innerHTML = weekdayHtml + cells.join("");
+}
+
+function buildCategoryColorMap(summary) {
+  categoryColorMap = new Map();
+  Object.keys(summary.by_category || {}).forEach((cat, i) => {
+    categoryColorMap.set(cat, CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]);
+  });
+}
+
+function renderCategoryInsights(summary) {
   const entries = Object.entries(summary.by_category || {});
+  els.donutCount.textContent = entries.length;
+
   if (!entries.length) {
+    els.donut.style.background = "var(--border)";
     els.categoryBreakdown.innerHTML = `<p class="empty-state">Inga prenumerationer än.</p>`;
     return;
   }
+
+  const totalMonthly = entries.reduce((sum, [, v]) => sum + v.monthly, 0) || 1;
+  let cumulative = 0;
+  const gradientParts = entries.map(([cat, v]) => {
+    const color = categoryColorFor(cat);
+    const start = (cumulative / totalMonthly) * 100;
+    cumulative += v.monthly;
+    const end = (cumulative / totalMonthly) * 100;
+    return `${color} ${start.toFixed(1)}% ${end.toFixed(1)}%`;
+  });
+  els.donut.style.background = `conic-gradient(${gradientParts.join(", ")})`;
+
   els.categoryBreakdown.innerHTML = entries
-    .map(
-      ([cat, v]) => `
+    .map(([cat, v]) => {
+      const color = categoryColorFor(cat);
+      return `
       <div class="category-row">
-        <span>${escapeHtml(cat)} <span class="muted">(${v.count})</span></span>
-        <span>${fmtMoney(v.monthly)}/mån · ${fmtMoney(v.annual)}/år</span>
-      </div>`
-    )
+        <span class="cat-name"><span class="category-dot" style="background:${color};"></span>${escapeHtml(cat)} <span class="muted">(${v.count})</span></span>
+        <span class="cat-value">${fmtMoney(v.monthly)}/mån</span>
+      </div>`;
+    })
     .join("");
 }
 
-function renderTable(subs) {
+function sortedSubs() {
+  const dir = sortDir === "asc" ? 1 : -1;
+  const copy = [...allSubs];
+  copy.sort((a, b) => {
+    if (sortKey === "name") return a.name.localeCompare(b.name, "sv") * dir;
+    if (sortKey === "cost") return (a.cost - b.cost) * dir;
+    if (sortKey === "category") return (a.category || "").localeCompare(b.category || "", "sv") * dir;
+    return a.next_payment_date.localeCompare(b.next_payment_date) * dir;
+  });
+  return copy;
+}
+
+function renderTable() {
+  const subs = sortedSubs();
   if (!subs.length) {
     els.subsTbody.innerHTML = `<tr><td colspan="6" class="empty-state">Inga prenumerationer än — lägg till din första ovan.</td></tr>`;
     return;
   }
   els.subsTbody.innerHTML = subs
-    .map(
-      (s) => `
+    .map((s) => {
+      const cat = s.category || "Okategoriserad";
+      const color = categoryColorFor(cat);
+      return `
       <tr>
         <td>${escapeHtml(s.name)}</td>
         <td>${fmtMoney(s.cost)}</td>
         <td>${cycleLabel(s)}</td>
         <td>${fmtDate(s.next_payment_date)}</td>
-        <td>${escapeHtml(s.category || "—")}</td>
+        <td><span class="category-pill" style="background:${pillBackground(color)}; color:${color};">${escapeHtml(cat)}</span></td>
         <td class="row-actions">
-          <button class="btn btn-secondary btn-small" data-edit="${s.id}">Redigera</button>
+          <button class="btn btn-edit btn-small" data-edit="${s.id}">Redigera</button>
           <button class="btn btn-danger btn-small" data-delete="${s.id}">Ta bort</button>
         </td>
-      </tr>`
-    )
+      </tr>`;
+    })
     .join("");
+}
+
+function updateSortArrows() {
+  document.querySelectorAll(".sort-arrow").forEach((el) => {
+    const key = el.getAttribute("data-arrow");
+    el.textContent = key === sortKey ? (sortDir === "asc" ? "↑" : "↓") : "";
+  });
+}
+
+function setSort(key) {
+  if (sortKey === key) {
+    sortDir = sortDir === "asc" ? "desc" : "asc";
+  } else {
+    sortKey = key;
+    sortDir = "asc";
+  }
+  els.sortSelect.value = sortKey;
+  updateSortArrows();
+  renderTable();
 }
 
 function escapeHtml(str) {
@@ -179,6 +328,26 @@ els.fieldCycle.addEventListener("change", () => {
   els.customDaysWrap.classList.toggle("hidden", els.fieldCycle.value !== "custom");
 });
 
+document.querySelectorAll(".segmented-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    currentView = btn.getAttribute("data-view");
+    document.querySelectorAll(".segmented-btn").forEach((b) => b.classList.toggle("active", b === btn));
+    els.upcomingList.classList.toggle("hidden", currentView !== "list");
+    els.upcomingCalendar.classList.toggle("hidden", currentView !== "calendar");
+    if (currentView === "calendar") renderCalendar();
+  });
+});
+
+document.querySelectorAll("th[data-sort]").forEach((th) => {
+  th.addEventListener("click", () => setSort(th.getAttribute("data-sort")));
+});
+els.sortSelect.addEventListener("change", () => {
+  sortKey = els.sortSelect.value;
+  sortDir = "asc";
+  updateSortArrows();
+  renderTable();
+});
+
 els.form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const payload = {
@@ -212,8 +381,7 @@ els.subsTbody.addEventListener("click", async (e) => {
   const deleteId = e.target.getAttribute("data-delete");
 
   if (editId) {
-    const subs = await api("/subscriptions");
-    const sub = subs.find((s) => String(s.id) === editId);
+    const sub = allSubs.find((s) => String(s.id) === editId);
     if (sub) openModal(sub);
   }
 

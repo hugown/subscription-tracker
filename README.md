@@ -11,9 +11,11 @@ This app is built using Claude Code, to get familiar with the tool and learn wha
 - Billing cycles: weekly, monthly, yearly, last (non-weekend) day of the month, or a custom "every N days"
 - Automatically rolls a subscription's next payment date forward as time passes, so it always reflects what's actually next
 - Dashboard showing:
-  - Upcoming payments in the next 30 days
+  - Upcoming payments in the next 30 days, as a list or a calendar view
   - Monthly and annual spending totals
-  - Spending broken down by category
+  - A 12-month spending trend chart
+  - Spending broken down by category, with a donut chart
+  - Sortable subscriptions table (click a column header or use the sort dropdown)
 - Data is stored locally in a SQLite file — nothing leaves your machine
 
 ## Requirements
@@ -90,10 +92,10 @@ subscription-tracker/
 | DELETE | `/api/subscriptions/<id>` | Delete a subscription                |
 | GET    | `/api/upcoming?days=30`   | Subscriptions due within N days      |
 | GET    | `/api/summary`            | Spending totals and category breakdown |
+| GET    | `/api/trend`              | Approximate monthly spend for the last 12 months |
 
 ## Ideas for later
 
 - Currency conversion for subscriptions in different currencies
 - Email/push reminders before a payment
-- Yearly spend chart over time
 - Multi-user support with accounts

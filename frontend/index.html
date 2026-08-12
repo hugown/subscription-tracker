@@ -3,13 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Prenumerationsspårare</title>
+  <title>Prenumerationer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app">
     <header class="app-header">
-      <h1>Prenumerationsspårare</h1>
+      <div class="brand">
+        <div class="logo-mark"><span class="logo-mark-inner"></span></div>
+        <h1>Prenumerationer</h1>
+      </div>
       <button id="add-btn" class="btn btn-primary">+ Lägg till prenumeration</button>
     </header>
 
@@ -22,36 +27,80 @@
         <div class="card-label">Månadskostnad</div>
         <div class="card-value" id="summary-monthly">–</div>
       </div>
-      <div class="card">
+      <div class="card card-highlight">
         <div class="card-label">Årskostnad</div>
         <div class="card-value" id="summary-annual">–</div>
       </div>
     </section>
 
+    <section class="insights-grid">
+      <div class="panel">
+        <h2>Utgiftstrend <span class="muted">(senaste 12 månaderna)</span></h2>
+        <svg id="trend-chart" viewBox="0 0 600 200" class="trend-svg" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#163460" stop-opacity="0.22"></stop>
+              <stop offset="100%" stop-color="#163460" stop-opacity="0"></stop>
+            </linearGradient>
+          </defs>
+          <path id="trend-area" fill="url(#trendFill)"></path>
+          <path id="trend-line" fill="none" stroke="#163460" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></path>
+          <g id="trend-points"></g>
+        </svg>
+        <div class="trend-labels" id="trend-labels"></div>
+      </div>
+
+      <div class="panel category-panel">
+        <h2>Kostnad per kategori</h2>
+        <div class="donut-wrap">
+          <div id="donut" class="donut">
+            <div class="donut-hole">
+              <div class="donut-count" id="donut-count">0</div>
+              <div class="donut-caption">kategorier</div>
+            </div>
+          </div>
+        </div>
+        <div id="category-breakdown" class="category-breakdown">
+          <p class="empty-state">Inga prenumerationer än.</p>
+        </div>
+      </div>
+    </section>
+
     <section class="panel">
-      <h2>Kommande betalningar <span class="muted">(nästa 30 dagar)</span></h2>
+      <div class="panel-header">
+        <h2>Kommande betalningar <span class="muted">(nästa 30 dagar)</span></h2>
+        <div class="segmented">
+          <button type="button" class="segmented-btn active" data-view="list">Lista</button>
+          <button type="button" class="segmented-btn" data-view="calendar">Kalender</button>
+        </div>
+      </div>
       <div id="upcoming-list" class="upcoming-list">
         <p class="empty-state">Inget att betala de kommande 30 dagarna.</p>
       </div>
+      <div id="upcoming-calendar" class="calendar hidden"></div>
     </section>
 
     <section class="panel">
-      <h2>Kostnad per kategori</h2>
-      <div id="category-breakdown" class="category-breakdown">
-        <p class="empty-state">Inga prenumerationer än.</p>
+      <div class="panel-header">
+        <h2>Alla prenumerationer</h2>
+        <div class="sort-control">
+          <span class="muted">Sortera:</span>
+          <select id="sort-select">
+            <option value="date">Nästa betalning</option>
+            <option value="name">Namn</option>
+            <option value="cost">Kostnad</option>
+            <option value="category">Kategori</option>
+          </select>
+        </div>
       </div>
-    </section>
-
-    <section class="panel">
-      <h2>Alla prenumerationer</h2>
       <div class="table-wrap">
         <table id="subs-table">
           <thead>
             <tr>
-              <th>Namn</th>
-              <th>Kostnad</th>
+              <th data-sort="name">Namn <span class="sort-arrow" data-arrow="name"></span></th>
+              <th data-sort="cost">Kostnad <span class="sort-arrow" data-arrow="cost"></span></th>
               <th>Faktureras</th>
-              <th>Nästa betalning</th>
+              <th data-sort="date">Nästa betalning <span class="sort-arrow" data-arrow="date"></span></th>
               <th>Kategori</th>
               <th></th>
             </tr>
