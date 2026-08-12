@@ -3,6 +3,8 @@
 A small local web app for keeping track of your subscriptions: what you have,
 what each one costs, how often it bills, and which day the money comes out.
 
+This app is built using Claude Code, to get familiar with the tool and learn what can be done and how it can be used efficiently
+
 ## Features
 
 - Add, edit, and delete subscriptions (name, cost, currency, billing cycle, next payment date, category, notes)
