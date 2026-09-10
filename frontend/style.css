@@ -354,6 +354,7 @@ th[data-sort] { cursor: pointer; user-select: none; }
 }
 
 tr.row-excluded { opacity: 0.55; }
+tr.has-notes { cursor: pointer; }
 
 #subs-tbody tr { transition: background 0.12s ease; }
 #subs-tbody tr:hover { background: #f2f6fc; }
@@ -432,6 +433,31 @@ tr.row-excluded { opacity: 0.55; }
 }
 
 .modal h2 { margin-top: 0; margin-bottom: 20px; font-size: 19px; font-weight: 700; }
+
+.notes-popover {
+  position: fixed;
+  z-index: 20;
+  max-width: 280px;
+  background: var(--text);
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 10px 14px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(11, 31, 58, 0.25);
+  white-space: pre-wrap;
+}
+
+.notes-popover.hidden { display: none; }
+
+.notes-popover::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 16px;
+  border: 6px solid transparent;
+  border-top-color: var(--text);
+}
 
 #sub-form label {
   display: flex;

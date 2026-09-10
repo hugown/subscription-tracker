@@ -33,7 +33,10 @@ const els = {
   fieldCategory: document.getElementById("field-category"),
   fieldNotes: document.getElementById("field-notes"),
   fieldInclude: document.getElementById("field-include"),
+  notesPopover: document.getElementById("notes-popover"),
 };
+
+let openNotesRowId = null;
 
 let allSubs = [];
 let currentView = "list";
@@ -214,6 +217,7 @@ function sortedSubs() {
 }
 
 function renderTable() {
+  closeNotesPopover();
   const subs = sortedSubs();
   if (!subs.length) {
     els.subsTbody.innerHTML = `<tr><td colspan="7" class="empty-state">Inga prenumerationer än — lägg till din första ovan.</td></tr>`;
@@ -224,7 +228,7 @@ function renderTable() {
       const cat = s.category || "Okategoriserad";
       const color = categoryColorFor(cat);
       return `
-      <tr class="${s.include_in_totals ? "" : "row-excluded"}">
+      <tr class="${s.include_in_totals ? "" : "row-excluded"} ${s.notes ? "has-notes" : ""}" data-row-id="${s.id}">
         <td>${escapeHtml(s.name)}</td>
         <td>${fmtMoney(s.cost)}</td>
         <td>${cycleLabel(s)}</td>
@@ -329,11 +333,40 @@ function closeModal() {
   els.modalBackdrop.classList.add("hidden");
 }
 
+function positionNotesPopover(row) {
+  els.notesPopover.classList.remove("hidden");
+  const rowRect = row.getBoundingClientRect();
+  const popRect = els.notesPopover.getBoundingClientRect();
+  const maxLeft = document.documentElement.clientWidth - popRect.width - 8;
+  const left = Math.min(Math.max(rowRect.left, 8), Math.max(maxLeft, 8));
+  const top = Math.max(rowRect.top - popRect.height - 10, 8);
+  els.notesPopover.style.left = `${left}px`;
+  els.notesPopover.style.top = `${top}px`;
+}
+
+function openNotesPopover(sub, row) {
+  openNotesRowId = sub.id;
+  els.notesPopover.textContent = sub.notes;
+  positionNotesPopover(row);
+}
+
+function closeNotesPopover() {
+  els.notesPopover.classList.add("hidden");
+  openNotesRowId = null;
+}
+
 els.addBtn.addEventListener("click", () => openModal());
 els.cancelBtn.addEventListener("click", closeModal);
 els.modalBackdrop.addEventListener("click", (e) => {
   if (e.target === els.modalBackdrop) closeModal();
 });
+document.addEventListener("click", (e) => {
+  if (els.notesPopover.classList.contains("hidden")) return;
+  if (els.notesPopover.contains(e.target)) return;
+  if (e.target.closest("tr.has-notes")) return; // handled by the row click below
+  closeNotesPopover();
+});
+window.addEventListener("scroll", closeNotesPopover);
 els.fieldCycle.addEventListener("change", () => {
   els.customDaysWrap.classList.toggle("hidden", els.fieldCycle.value !== "custom");
   updateDateFieldForCycle(els.fieldCycle.value);
@@ -395,6 +428,7 @@ els.subsTbody.addEventListener("click", async (e) => {
   if (editId) {
     const sub = allSubs.find((s) => String(s.id) === editId);
     if (sub) openModal(sub);
+    return;
   }
 
   if (deleteId) {
@@ -405,6 +439,21 @@ els.subsTbody.addEventListener("click", async (e) => {
     } catch (err) {
       alert(err.message);
     }
+    return;
+  }
+
+  if (e.target.closest("button") || e.target.closest("input")) return;
+  const row = e.target.closest("tr[data-row-id]");
+  if (!row) return;
+  const sub = allSubs.find((s) => String(s.id) === row.getAttribute("data-row-id"));
+  if (!sub || !sub.notes) {
+    closeNotesPopover();
+    return;
+  }
+  if (openNotesRowId === sub.id) {
+    closeNotesPopover();
+  } else {
+    openNotesPopover(sub, row);
   }
 });
 
