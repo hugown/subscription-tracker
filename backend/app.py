@@ -77,6 +77,11 @@ def validate_payload(data, partial=False):
     if "notes" in data:
         cleaned["notes"] = (data.get("notes") or "").strip() or None
 
+    if "include_in_totals" in data:
+        cleaned["include_in_totals"] = bool(data.get("include_in_totals"))
+    elif not partial:
+        cleaned["include_in_totals"] = True
+
     return cleaned, None
 
 
@@ -138,6 +143,8 @@ def summary():
     by_category = {}
 
     for s in subs:
+        if not s.get("include_in_totals", True):
+            continue
         occ = models.occurrences_per_year(s["billing_cycle"], s.get("custom_days"))
         annual = s["cost"] * occ
         monthly = annual / 12

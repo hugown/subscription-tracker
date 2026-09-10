@@ -345,6 +345,15 @@ th[data-sort] { cursor: pointer; user-select: none; }
   display: inline-block;
 }
 
+.include-toggle {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+tr.row-excluded { opacity: 0.55; }
+
 .row-actions {
   display: flex;
   gap: 8px;
@@ -426,7 +435,7 @@ th[data-sort] { cursor: pointer; user-select: none; }
   margin-bottom: 16px;
 }
 
-#sub-form input,
+#sub-form input:not([type="checkbox"]),
 #sub-form select {
   font-size: 14px;
   color: var(--text);
@@ -434,6 +443,21 @@ th[data-sort] { cursor: pointer; user-select: none; }
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-family: inherit;
+}
+
+#sub-form label.checkbox-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+#sub-form label.checkbox-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
 }
 
 .form-row {

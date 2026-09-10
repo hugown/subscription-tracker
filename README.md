@@ -16,6 +16,7 @@ This app is built using Claude Code, to get familiar with the tool and learn wha
   - A 12-month spending trend chart
   - Spending broken down by category, with a donut chart
   - Sortable subscriptions table (click a column header or use the sort dropdown)
+- "Räkna med" checkbox per subscription to exclude it from the monthly/annual totals, category breakdown, and trend chart (still shows up in the table, upcoming payments, and calendar)
 - Data is stored locally in a SQLite file — nothing leaves your machine
 
 ## Requirements

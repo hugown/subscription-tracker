@@ -59,10 +59,15 @@ def init_db():
             next_payment_date TEXT NOT NULL,
             category TEXT,
             notes TEXT,
+            include_in_totals INTEGER NOT NULL DEFAULT 1,
             created_at TEXT NOT NULL
         )
         """
     )
+    # Migrate databases created before include_in_totals existed.
+    existing_cols = {row["name"] for row in conn.execute("PRAGMA table_info(subscriptions)")}
+    if "include_in_totals" not in existing_cols:
+        conn.execute("ALTER TABLE subscriptions ADD COLUMN include_in_totals INTEGER NOT NULL DEFAULT 1")
     conn.commit()
     conn.close()
 
@@ -121,7 +126,9 @@ def monthly_trend(months=12, today=None):
     """
     today = today or date.today()
     conn = get_db()
-    rows = conn.execute("SELECT cost, billing_cycle, custom_days, created_at FROM subscriptions").fetchall()
+    rows = conn.execute(
+        "SELECT cost, billing_cycle, custom_days, created_at FROM subscriptions WHERE include_in_totals = 1"
+    ).fetchall()
     conn.close()
     subs = [dict(r) for r in rows]
 
@@ -157,6 +164,7 @@ def row_to_dict(row):
         "next_payment_date": row["next_payment_date"],
         "category": row["category"],
         "notes": row["notes"],
+        "include_in_totals": bool(row["include_in_totals"]),
         "created_at": row["created_at"],
     }
 
@@ -195,8 +203,8 @@ def create_subscription(data):
     cur = conn.execute(
         """
         INSERT INTO subscriptions
-            (name, cost, currency, billing_cycle, custom_days, next_payment_date, category, notes, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (name, cost, currency, billing_cycle, custom_days, next_payment_date, category, notes, include_in_totals, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             data["name"],
@@ -207,6 +215,7 @@ def create_subscription(data):
             data["next_payment_date"],
             data.get("category"),
             data.get("notes"),
+            int(data.get("include_in_totals", True)),
             date.today().isoformat(),
         ),
     )
@@ -226,7 +235,7 @@ def update_subscription(sub_id, data):
         """
         UPDATE subscriptions
         SET name = ?, cost = ?, currency = ?, billing_cycle = ?, custom_days = ?,
-            next_payment_date = ?, category = ?, notes = ?
+            next_payment_date = ?, category = ?, notes = ?, include_in_totals = ?
         WHERE id = ?
         """,
         (
@@ -238,6 +247,7 @@ def update_subscription(sub_id, data):
             merged["next_payment_date"],
             merged.get("category"),
             merged.get("notes"),
+            int(merged.get("include_in_totals", True)),
             sub_id,
         ),
     )

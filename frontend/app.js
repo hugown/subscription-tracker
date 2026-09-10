@@ -37,6 +37,7 @@ const els = {
   fieldDate: document.getElementById("field-date"),
   fieldCategory: document.getElementById("field-category"),
   fieldNotes: document.getElementById("field-notes"),
+  fieldInclude: document.getElementById("field-include"),
 };
 
 let allSubs = [];
@@ -243,7 +244,7 @@ function sortedSubs() {
 function renderTable() {
   const subs = sortedSubs();
   if (!subs.length) {
-    els.subsTbody.innerHTML = `<tr><td colspan="6" class="empty-state">Inga prenumerationer än — lägg till din första ovan.</td></tr>`;
+    els.subsTbody.innerHTML = `<tr><td colspan="7" class="empty-state">Inga prenumerationer än — lägg till din första ovan.</td></tr>`;
     return;
   }
   els.subsTbody.innerHTML = subs
@@ -251,12 +252,13 @@ function renderTable() {
       const cat = s.category || "Okategoriserad";
       const color = categoryColorFor(cat);
       return `
-      <tr>
+      <tr class="${s.include_in_totals ? "" : "row-excluded"}">
         <td>${escapeHtml(s.name)}</td>
         <td>${fmtMoney(s.cost)}</td>
         <td>${cycleLabel(s)}</td>
         <td>${fmtDate(s.next_payment_date)}</td>
         <td><span class="category-pill" style="background:${pillBackground(color)}; color:${color};">${escapeHtml(cat)}</span></td>
+        <td><input type="checkbox" class="include-toggle" data-include-toggle="${s.id}" ${s.include_in_totals ? "checked" : ""} /></td>
         <td class="row-actions">
           <button class="btn btn-edit btn-small" data-edit="${s.id}">Redigera</button>
           <button class="btn btn-danger btn-small" data-delete="${s.id}">Ta bort</button>
@@ -337,12 +339,14 @@ function openModal(sub = null) {
     els.fieldDate.value = sub.next_payment_date;
     els.fieldCategory.value = sub.category || "";
     els.fieldNotes.value = sub.notes || "";
+    els.fieldInclude.checked = sub.include_in_totals !== false;
     els.customDaysWrap.classList.toggle("hidden", sub.billing_cycle !== "custom");
     updateDateFieldForCycle(sub.billing_cycle, { autofill: false });
   } else {
     els.modalTitle.textContent = "Lägg till prenumeration";
     els.fieldId.value = "";
     els.fieldDate.value = new Date().toISOString().slice(0, 10);
+    els.fieldInclude.checked = true;
     updateDateFieldForCycle(els.fieldCycle.value);
   }
   els.modalBackdrop.classList.remove("hidden");
@@ -392,6 +396,7 @@ els.form.addEventListener("submit", async (e) => {
     next_payment_date: els.fieldDate.value,
     category: els.fieldCategory.value.trim(),
     notes: els.fieldNotes.value.trim(),
+    include_in_totals: els.fieldInclude.checked,
   };
   if (payload.billing_cycle === "custom") {
     payload.custom_days = parseInt(els.fieldCustomDays.value, 10);
@@ -428,6 +433,21 @@ els.subsTbody.addEventListener("click", async (e) => {
     } catch (err) {
       alert(err.message);
     }
+  }
+});
+
+els.subsTbody.addEventListener("change", async (e) => {
+  const id = e.target.getAttribute("data-include-toggle");
+  if (!id) return;
+  try {
+    await api(`/subscriptions/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ include_in_totals: e.target.checked }),
+    });
+    await refreshAll();
+  } catch (err) {
+    alert(err.message);
+    e.target.checked = !e.target.checked;
   }
 });
 

@@ -102,11 +102,12 @@
               <th>Faktureras</th>
               <th data-sort="date">Nästa betalning <span class="sort-arrow" data-arrow="date"></span></th>
               <th>Kategori</th>
+              <th>Räkna med</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="subs-tbody">
-            <tr><td colspan="6" class="empty-state">Inga prenumerationer än — lägg till din första ovan.</td></tr>
+            <tr><td colspan="7" class="empty-state">Inga prenumerationer än — lägg till din första ovan.</td></tr>
           </tbody>
         </table>
       </div>
@@ -159,6 +160,11 @@
         <label>
           Anteckningar <span class="muted">(valfritt)</span>
           <input type="text" id="field-notes" placeholder="" />
+        </label>
+
+        <label class="checkbox-row">
+          <input type="checkbox" id="field-include" checked />
+          Räkna med i totalsumman
         </label>
 
         <div class="modal-actions">
