@@ -174,11 +174,6 @@ def summary():
     )
 
 
-@app.route("/api/trend", methods=["GET"])
-def trend():
-    return jsonify(models.monthly_trend())
-
-
 @app.route("/")
 def index():
     return send_from_directory(FRONTEND_DIR, "index.html")

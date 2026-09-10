@@ -13,10 +13,9 @@ This app is built using Claude Code, to get familiar with the tool and learn wha
 - Dashboard showing:
   - Upcoming payments in the next 30 days, as a list or a calendar view
   - Monthly and annual spending totals
-  - A 12-month spending trend chart
   - Spending broken down by category, with a donut chart
   - Sortable subscriptions table (click a column header or use the sort dropdown)
-- "Räkna med" checkbox per subscription to exclude it from the monthly/annual totals, category breakdown, and trend chart (still shows up in the table, upcoming payments, and calendar)
+- "Räkna med" checkbox per subscription to exclude it from the monthly/annual totals and category breakdown (still shows up in the table, upcoming payments, and calendar)
 - Data is stored locally in a SQLite file — nothing leaves your machine
 
 ## Requirements
@@ -93,7 +92,6 @@ subscription-tracker/
 | DELETE | `/api/subscriptions/<id>` | Delete a subscription                |
 | GET    | `/api/upcoming?days=30`   | Subscriptions due within N days      |
 | GET    | `/api/summary`            | Spending totals and category breakdown |
-| GET    | `/api/trend`              | Approximate monthly spend for the last 12 months |
 
 ## Ideas for later
 

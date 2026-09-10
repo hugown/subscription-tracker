@@ -8,13 +8,8 @@ const CATEGORY_PALETTE = [
 const WEEKDAY_LABELS = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
 
 const els = {
-  summaryCount: document.getElementById("summary-count"),
   summaryMonthly: document.getElementById("summary-monthly"),
   summaryAnnual: document.getElementById("summary-annual"),
-  trendArea: document.getElementById("trend-area"),
-  trendLine: document.getElementById("trend-line"),
-  trendPoints: document.getElementById("trend-points"),
-  trendLabels: document.getElementById("trend-labels"),
   donut: document.getElementById("donut"),
   donutCount: document.getElementById("donut-count"),
   categoryBreakdown: document.getElementById("category-breakdown"),
@@ -71,7 +66,11 @@ function categoryColorFor(cat) {
 }
 
 function pillBackground(color) {
-  return `color-mix(in srgb, ${color} 16%, white)`;
+  return `color-mix(in srgb, ${color} 14%, white)`;
+}
+
+function pillTextColor(color) {
+  return `color-mix(in srgb, ${color} 72%, #0b1f3a)`;
 }
 
 async function api(path, options = {}) {
@@ -92,11 +91,10 @@ async function api(path, options = {}) {
 }
 
 async function refreshAll() {
-  const [subs, upcoming, summary, trend] = await Promise.all([
+  const [subs, upcoming, summary] = await Promise.all([
     api("/subscriptions"),
     api("/upcoming?days=30"),
     api("/summary"),
-    api("/trend"),
   ]);
   allSubs = subs;
   buildCategoryColorMap(summary);
@@ -104,39 +102,13 @@ async function refreshAll() {
   renderUpcoming(upcoming);
   if (currentView === "calendar") renderCalendar();
   renderCategoryInsights(summary);
-  renderTrend(trend);
   renderTable();
   updateSortArrows();
 }
 
 function renderSummary(summary) {
-  els.summaryCount.textContent = summary.subscription_count;
   els.summaryMonthly.textContent = fmtMoney(summary.total_monthly);
   els.summaryAnnual.textContent = fmtMoney(summary.total_annual);
-}
-
-function renderTrend(trend) {
-  const w = 600, h = 200, pad = 10;
-  const values = trend.map((t) => t.total);
-  const max = Math.max(...values);
-  const min = Math.min(...values);
-  const range = max - min || 1;
-  const step = values.length > 1 ? (w - pad * 2) / (values.length - 1) : 0;
-  const points = values.map((v, i) => ({
-    x: pad + i * step,
-    y: pad + (h - pad * 2) * (1 - (v - min) / range),
-  }));
-  const line = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-  const area = points.length
-    ? `${line} L${points[points.length - 1].x.toFixed(1)},${h - pad} L${points[0].x.toFixed(1)},${h - pad} Z`
-    : "";
-
-  els.trendLine.setAttribute("d", line);
-  els.trendArea.setAttribute("d", area);
-  els.trendPoints.innerHTML = points
-    .map((p) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#163460"></circle>`)
-    .join("");
-  els.trendLabels.innerHTML = trend.map((t) => `<span>${escapeHtml(t.label)}</span>`).join("");
 }
 
 function renderUpcoming(items) {
@@ -257,7 +229,7 @@ function renderTable() {
         <td>${fmtMoney(s.cost)}</td>
         <td>${cycleLabel(s)}</td>
         <td>${fmtDate(s.next_payment_date)}</td>
-        <td><span class="category-pill" style="background:${pillBackground(color)}; color:${color};">${escapeHtml(cat)}</span></td>
+        <td><span class="category-pill" style="background:${pillBackground(color)}; color:${pillTextColor(color)};">${escapeHtml(cat)}</span></td>
         <td><input type="checkbox" class="include-toggle" data-include-toggle="${s.id}" ${s.include_in_totals ? "checked" : ""} /></td>
         <td class="row-actions">
           <button class="btn btn-edit btn-small" data-edit="${s.id}">Redigera</button>
@@ -453,5 +425,5 @@ els.subsTbody.addEventListener("change", async (e) => {
 
 refreshAll().catch((err) => {
   console.error(err);
-  els.subsTbody.innerHTML = `<tr><td colspan="6" class="empty-state">Kunde inte läsas in: ${escapeHtml(err.message)}</td></tr>`;
+  els.subsTbody.innerHTML = `<tr><td colspan="7" class="empty-state">Kunde inte läsas in: ${escapeHtml(err.message)}</td></tr>`;
 });

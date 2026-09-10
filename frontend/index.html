@@ -3,55 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Prenumerationer</title>
+  <title>Återkommande betalningar</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app">
-    <header class="app-header">
+  <header class="app-banner">
+    <div class="app-banner-inner">
       <div class="brand">
-        <div class="logo-mark"><span class="logo-mark-inner"></span></div>
-        <h1>Prenumerationer</h1>
+        <svg class="brand-icon" viewBox="0 0 34 32" width="42" height="39" fill="none">
+          <rect x="3.5" y="6.5" width="20" height="19" rx="4" stroke="#ffffff" stroke-width="1.7"></rect>
+          <path d="M3.5 12h20" stroke="#ffffff" stroke-width="1.7"></path>
+          <path d="M9 3.5v5M18 3.5v5" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round"></path>
+          <circle cx="23.5" cy="21" r="7" fill="#122c50" stroke="#ff8a5c" stroke-width="1.8"></circle>
+          <text x="23.5" y="24" text-anchor="middle" font-family="Manrope, sans-serif" font-size="7.5" font-weight="700" fill="#ff8a5c">kr</text>
+        </svg>
+        <h1>Återkommande betalningar</h1>
       </div>
-      <button id="add-btn" class="btn btn-primary">+ Lägg till prenumeration</button>
-    </header>
+      <button id="add-btn" class="btn-add">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+        Lägg till prenumeration
+      </button>
+    </div>
+    <div class="app-banner-pattern"></div>
+  </header>
 
-    <section class="summary-cards" id="summary-cards">
-      <div class="card">
-        <div class="card-label">Aktiva prenumerationer</div>
-        <div class="card-value" id="summary-count">–</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Månadskostnad</div>
-        <div class="card-value" id="summary-monthly">–</div>
-      </div>
-      <div class="card card-highlight">
-        <div class="card-label">Årskostnad</div>
-        <div class="card-value" id="summary-annual">–</div>
-      </div>
-    </section>
-
+  <div class="app">
     <section class="insights-grid">
       <div class="panel">
-        <h2>Utgiftstrend <span class="muted">(senaste 12 månaderna)</span></h2>
-        <svg id="trend-chart" viewBox="0 0 600 200" class="trend-svg" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#163460" stop-opacity="0.22"></stop>
-              <stop offset="100%" stop-color="#163460" stop-opacity="0"></stop>
-            </linearGradient>
-          </defs>
-          <path id="trend-area" fill="url(#trendFill)"></path>
-          <path id="trend-line" fill="none" stroke="#163460" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></path>
-          <g id="trend-points"></g>
-        </svg>
-        <div class="trend-labels" id="trend-labels"></div>
+        <div class="panel-header">
+          <h2>Kommande betalningar <span class="muted">(nästa 30 dagar)</span></h2>
+          <div class="segmented">
+            <button type="button" class="segmented-btn active" data-view="list">Lista</button>
+            <button type="button" class="segmented-btn" data-view="calendar">Kalender</button>
+          </div>
+        </div>
+        <div id="upcoming-list" class="upcoming-list">
+          <p class="empty-state">Inget att betala de kommande 30 dagarna.</p>
+        </div>
+        <div id="upcoming-calendar" class="calendar hidden"></div>
       </div>
 
-      <div class="panel category-panel">
-        <h2>Kostnad per kategori</h2>
+      <div class="panel summary-panel">
+        <h2>Summering</h2>
+        <div class="summary-rows">
+          <div class="summary-row">
+            <span class="muted">Månadskostnad</span>
+            <span class="summary-value" id="summary-monthly">–</span>
+          </div>
+          <div class="summary-row">
+            <span class="muted">Årskostnad</span>
+            <span class="summary-value" id="summary-annual">–</span>
+          </div>
+        </div>
         <div class="donut-wrap">
           <div id="donut" class="donut">
             <div class="donut-hole">
@@ -64,20 +70,6 @@
           <p class="empty-state">Inga prenumerationer än.</p>
         </div>
       </div>
-    </section>
-
-    <section class="panel">
-      <div class="panel-header">
-        <h2>Kommande betalningar <span class="muted">(nästa 30 dagar)</span></h2>
-        <div class="segmented">
-          <button type="button" class="segmented-btn active" data-view="list">Lista</button>
-          <button type="button" class="segmented-btn" data-view="calendar">Kalender</button>
-        </div>
-      </div>
-      <div id="upcoming-list" class="upcoming-list">
-        <p class="empty-state">Inget att betala de kommande 30 dagarna.</p>
-      </div>
-      <div id="upcoming-calendar" class="calendar hidden"></div>
     </section>
 
     <section class="panel">
