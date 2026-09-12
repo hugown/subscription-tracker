@@ -229,27 +229,6 @@ a:hover { color: var(--primary-hover); }
 
 .category-row .cat-value { color: var(--muted); }
 
-.segmented {
-  display: flex;
-  gap: 4px;
-  background: var(--bg);
-  border-radius: 8px;
-  padding: 3px;
-}
-
-.segmented-btn {
-  border: none;
-  border-radius: 6px;
-  padding: 6px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  background: transparent;
-  color: var(--muted);
-  font-family: inherit;
-}
-.segmented-btn.active { background: var(--surface); color: var(--primary); }
-
 .upcoming-list {
   display: flex;
   flex-direction: column;
@@ -271,33 +250,6 @@ a:hover { color: var(--primary-hover); }
 
 .upcoming-item .name { font-weight: 600; }
 .upcoming-item .when { color: var(--warn-text); font-size: 13px; }
-
-.calendar {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  font-size: 12px;
-}
-
-.calendar-weekday {
-  text-align: center;
-  color: var(--muted);
-  font-weight: 600;
-  padding: 4px 0;
-}
-
-.calendar-cell {
-  min-height: 52px;
-  border-radius: 8px;
-  padding: 6px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-.calendar-cell.empty { background: transparent; border-color: transparent; }
-.calendar-cell.has-payment { background: var(--warn-bg); border-color: var(--warn-border); }
-.calendar-cell .cell-day { font-size: 12px; font-weight: 600; }
-.calendar-cell .cell-payment { font-size: 10px; margin-top: 4px; color: var(--warn-text); font-weight: 600; }
 
 .sort-control {
   display: flex;

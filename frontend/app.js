@@ -5,7 +5,6 @@ const CATEGORY_PALETTE = [
   "#7c3aed", "#0891b2", "#be123c", "#65a30d",
   "#0d9488", "#9333ea",
 ];
-const WEEKDAY_LABELS = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
 
 const els = {
   summaryMonthly: document.getElementById("summary-monthly"),
@@ -14,7 +13,6 @@ const els = {
   donutCount: document.getElementById("donut-count"),
   categoryBreakdown: document.getElementById("category-breakdown"),
   upcomingList: document.getElementById("upcoming-list"),
-  upcomingCalendar: document.getElementById("upcoming-calendar"),
   subsTbody: document.getElementById("subs-tbody"),
   sortSelect: document.getElementById("sort-select"),
   addBtn: document.getElementById("add-btn"),
@@ -39,7 +37,6 @@ const els = {
 let openNotesRowId = null;
 
 let allSubs = [];
-let currentView = "list";
 let sortKey = "date";
 let sortDir = "asc";
 let categoryColorMap = new Map();
@@ -103,7 +100,6 @@ async function refreshAll() {
   buildCategoryColorMap(summary);
   renderSummary(summary);
   renderUpcoming(upcoming);
-  if (currentView === "calendar") renderCalendar();
   renderCategoryInsights(summary);
   renderTable();
   updateSortArrows();
@@ -129,39 +125,6 @@ function renderUpcoming(items) {
         </div>`;
     })
     .join("");
-}
-
-function renderCalendar() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const firstDay = new Date(year, month, 1);
-  const startOffset = (firstDay.getDay() + 6) % 7; // Monday-first
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const paymentsByDay = {};
-  allSubs.forEach((s) => {
-    const d = new Date(s.next_payment_date + "T00:00:00");
-    if (d.getFullYear() === year && d.getMonth() === month) {
-      paymentsByDay[d.getDate()] = paymentsByDay[d.getDate()] ? `${paymentsByDay[d.getDate()]}, ${s.name}` : s.name;
-    }
-  });
-
-  const cells = [];
-  for (let i = 0; i < startOffset; i++) {
-    cells.push(`<div class="calendar-cell empty"></div>`);
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    const label = paymentsByDay[d];
-    cells.push(`
-      <div class="calendar-cell ${label ? "has-payment" : ""}">
-        <div class="cell-day">${d}</div>
-        ${label ? `<div class="cell-payment">${escapeHtml(label)}</div>` : ""}
-      </div>`);
-  }
-
-  const weekdayHtml = WEEKDAY_LABELS.map((w) => `<div class="calendar-weekday">${w}</div>`).join("");
-  els.upcomingCalendar.innerHTML = weekdayHtml + cells.join("");
 }
 
 function buildCategoryColorMap(summary) {
@@ -370,16 +333,6 @@ window.addEventListener("scroll", closeNotesPopover);
 els.fieldCycle.addEventListener("change", () => {
   els.customDaysWrap.classList.toggle("hidden", els.fieldCycle.value !== "custom");
   updateDateFieldForCycle(els.fieldCycle.value);
-});
-
-document.querySelectorAll(".segmented-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    currentView = btn.getAttribute("data-view");
-    document.querySelectorAll(".segmented-btn").forEach((b) => b.classList.toggle("active", b === btn));
-    els.upcomingList.classList.toggle("hidden", currentView !== "list");
-    els.upcomingCalendar.classList.toggle("hidden", currentView !== "calendar");
-    if (currentView === "calendar") renderCalendar();
-  });
 });
 
 document.querySelectorAll("th[data-sort]").forEach((th) => {
